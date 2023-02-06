@@ -9,7 +9,6 @@ import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -17,18 +16,17 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
-
+    static final int REQUEST_IMAGE_CAPTURE = 1;
+    ImageView imageView;
     private Button buttonGallery;
     private Button buttonCamera;
     private ActivityResultLauncher<Intent> someActivityResultLauncher;
-    private ActivityResultLauncher<Intent> CameraActivityResultLauncher;
-    private ImageView imageView;
 
-    public static int RC_PHOTO_PICKER = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        imageView = findViewById(R.id.imageView);
         buttonGallery =  findViewById(R.id.Gallery);
         buttonCamera = findViewById(R.id.buttonCamera);
 
@@ -47,19 +45,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-        CameraActivityResultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK) {
-                            Bundle extras = result.getData().getExtras();
-                            Bitmap imageBitmap = (Bitmap) extras.get("data");
-                            System.out.println("AAAAAAAA");
-                            imageView.setImageBitmap(imageBitmap);
-                        }
-                    }
-                });
+
 
         buttonGallery.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,12 +60,10 @@ public class MainActivity extends AppCompatActivity {
         buttonCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                openCamera(null);
+                dispatchTakePictureIntent();
             }
         });
     }
-
-
 
     public void openGallery(View view) {
         //Create Intent
@@ -90,13 +74,17 @@ public class MainActivity extends AppCompatActivity {
         someActivityResultLauncher.launch(intent);
     }
 
-    public void openCamera(View view){
-        //Create Intent
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        //intent.setType("image/jpg");
-        intent.putExtra(MediaStore.ACTION_IMAGE_CAPTURE, true);
-        //Launch activity to get result
-        CameraActivityResultLauncher.launch(intent);
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            Bundle extras = data.getExtras();
+            Bitmap imageBitmap = (Bitmap) extras.get("data");
+            imageView.setImageBitmap(imageBitmap);
+        }
+    }
 }
